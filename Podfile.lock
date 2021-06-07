@@ -1,0 +1,20 @@
+PODS:
+  - Hex (6.1.0)
+  - SnapKit (5.0.1)
+
+DEPENDENCIES:
+  - Hex
+  - SnapKit (~> 5.0.1)
+
+SPEC REPOS:
+  trunk:
+    - Hex
+    - SnapKit
+
+SPEC CHECKSUMS:
+  Hex: 2f67dd0cbb178cb24992e7529b025b8d16ff0bdc
+  SnapKit: 97b92857e3df3a0c71833cce143274bf6ef8e5eb
+
+PODFILE CHECKSUM: 52ae3d1c16cb6cf20c6a5869e4d0f75db0b85ee0
+
+COCOAPODS: 1.10.0
