@@ -103,7 +103,6 @@
 				93F3D670265C37E00087B3D2 /* CityWeatherViewController.swift */,
 				93F3D672265C382D0087B3D2 /* AddCityViewController.swift */,
 				93F3D66E265C36020087B3D2 /* MainScreenViewController.swift */,
-				93295658266BD1A60072B3CD /* Networking */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -174,6 +173,7 @@
 				9366B01B26530C2B003D1C33 /* SceneDelegate.swift */,
 				93C5BC9D26696C3300819986 /* Coordinators */,
 				931BEC9B26596CAE003B50BF /* ViewControllers */,
+				93295658266BD1A60072B3CD /* Networking */,
 				9394D94B2664075300A4892D /* Cells */,
 				931BEC9C26599156003B50BF /* Views */,
 				931CA7CD2654513800C4C227 /* Helpers */,

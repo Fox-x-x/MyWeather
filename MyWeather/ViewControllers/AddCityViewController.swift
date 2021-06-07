@@ -31,8 +31,6 @@ class AddCityViewController: UIViewController {
         navigationController?.isNavigationBarHidden = true
         view.backgroundColor = .white
         
-//        title = "Kenig, Russia"
-        
         setupLayout()
         
     }
@@ -58,7 +56,6 @@ class AddCityViewController: UIViewController {
     
     @objc private func addCityButtonPressed() {
         print("pressed")
-//        NetworkManager.getWeather()
     }
 
 }
