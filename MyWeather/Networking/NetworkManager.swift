@@ -24,23 +24,37 @@ struct NetworkManager {
     
      func performRequest() {
         
-        if let url = URL(string: "https://api.openweathermap.org/data/2.5/onecall?lat=33.44&lon=-94.04&lang=ru&units=metric&appid=4aa31e68b72635e6c5bd2e40781e5469") {
-            let _ = session.dataTask(with: url) { (data, response, error) in
-                
-                guard error == nil else {
-                    print("dataTask error:\n \(error.debugDescription)")
-                    self.delegate?.didFailWithError(error: error!)
-                    return
-                }
-                
-                if let data = data {
-                    if let weather = self.parseJSON(data) {
-                        print("Weather: \(weather)")
-                        self.delegate?.didUpdateWeather(self, weather: weather)
+        if let url = URL(string: "https://api.openweathermap.org/data/2.5/onecall?lat=54.43&lon=20.30&lang=ru&units=metric&appid=4aa31e68b72635e6c5bd2e40781e5469") {
+            
+            let queue = DispatchQueue.global(qos: .userInitiated)
+            
+            DispatchQueue.main.async {
+                // показываем лоадер
+            }
+            
+            queue.async {
+                let task = session.dataTask(with: url) { data, response, error in
+                    
+                    guard error == nil else {
+                        print("dataTask error:\n \(error.debugDescription)")
+                        self.delegate?.didFailWithError(error: error!)
+                        return
+                    }
+                    
+                    if let data = data {
+                        if let weather = self.parseJSON(data) {
+                            print("Weather: \(weather)")
+                            self.delegate?.didUpdateWeather(self, weather: weather)
+                            DispatchQueue.main.async {
+                                // прячем лоадер
+                            }
+                        }
                     }
                 }
+                task.resume()
                 
-            }.resume()
+            }
+            
         }
           
     }

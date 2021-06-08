@@ -16,7 +16,8 @@ extension UIView {
         let calcDate = Date(timeIntervalSince1970: date)
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = format
-        dateFormatter.timeZone = .current
+        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        dateFormatter.locale = Locale(identifier: "ru_RU")
         
         return dateFormatter.string(from: calcDate)
     }

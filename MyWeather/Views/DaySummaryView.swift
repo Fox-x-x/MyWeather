@@ -29,10 +29,10 @@ final class DaySummaryView: UIView {
             windMetricLabel.text = String(format: "%.0f", floor(weather.current.windSpeed)) + " м/с"
             rainMetricLabel.text = String(format: "%.0f", floor(weather.daily[0].pop * 100)) + "%"
             
-            sunriseTimeLabel.text = dateToString(weather.current.sunrise, withFormat: "HH:mm")
-            sunsetTimeLabel.text = dateToString(weather.current.sunset, withFormat: "HH:mm")
+            sunriseTimeLabel.text = dateToString(weather.current.sunrise + weather.timezoneOffset, withFormat: "HH:mm")
+            sunsetTimeLabel.text = dateToString(weather.current.sunset + weather.timezoneOffset, withFormat: "HH:mm")
             
-            dateLabel.text = dateToString(weather.current.dt, withFormat: "hh:mm MMM dd")
+            dateLabel.text = dateToString(weather.current.dt + weather.timezoneOffset, withFormat: "HH:mm, E dd MMM")
             
         }
     }

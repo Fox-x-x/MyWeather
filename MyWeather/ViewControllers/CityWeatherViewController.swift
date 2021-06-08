@@ -91,7 +91,7 @@ class CityWeatherViewController: UIViewController {
         
         weatherManager.delegate = self
         
-        title = "Chicago, USA"
+        title = "Kaliningrad, Russia"
         
         setupLayout()
         
