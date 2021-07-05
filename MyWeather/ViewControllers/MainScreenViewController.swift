@@ -12,8 +12,14 @@ class MainScreenViewController: UIPageViewController {
     
     weak var coordinator: MainCoordinator?
     
+    private var cities = [CityWeather]()
+    
+    private var cityManagerViewController: AddCityViewController?
+    
+    private let coreDataManager = CoreDataStack()
+    
     var pages = [UIViewController]()
-    let initialPage = 0
+    var initialPage = 0
     
     private lazy var controlsContentView: UIView = {
         let view = UIView()
@@ -25,7 +31,7 @@ class MainScreenViewController: UIPageViewController {
         let pageControl = UIPageControl()
         pageControl.currentPageIndicatorTintColor = .black
         pageControl.pageIndicatorTintColor = .systemGray2
-        pageControl.numberOfPages = pages.count
+//        pageControl.numberOfPages = pages.count
         pageControl.addTarget(self, action: #selector(pageControlTapped(_:)), for: .valueChanged)
         return pageControl
     }()
@@ -55,7 +61,7 @@ class MainScreenViewController: UIPageViewController {
     private lazy var locationLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        label.text = "New York, USA"
+        label.text = ""
         label.textColor = UIColor(hex: "#272722")
         label.textAlignment = .center
         return label
@@ -72,22 +78,32 @@ class MainScreenViewController: UIPageViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setup()
+        dataSource = self
+        delegate = self
+        
+        setupPages()
         pageControl.currentPage = initialPage
         setupLayout()
         
         navigationController?.isNavigationBarHidden = true
         
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        
     }
     
-    private func setup() {
+    private func setupPages() {
         
-        dataSource = self
-        delegate = self
+        let cityManagerViewController = AddCityViewController(coreDataManager: coreDataManager)
+        cityManagerViewController.delegate = self
         
-        pages.append(UINavigationController(rootViewController: AddCityViewController()))
-        pages.append(UINavigationController(rootViewController: CityWeatherViewController()))
+        pages.append(UINavigationController(rootViewController: cityManagerViewController))
         
+        for city in cities {
+            pages.append(UINavigationController(rootViewController: CityWeatherViewController(city: city)))
+        }
+        
+        print("pages count = \(pages.count)")
+        pageControl.numberOfPages = pages.count
         setViewControllers([pages[initialPage]], direction: .forward, animated: true, completion: nil)
     }
     
@@ -193,5 +209,29 @@ extension MainScreenViewController: UIPageViewControllerDelegate {
     }
 
 }
+
+extension MainScreenViewController: AddCityManagerDelegate {
+    
+    func didAddCity(city: CityWeather) {
+        print("city has been added: \(city.cityName)")
+        cities.append(city)
+        pages.append(UINavigationController(rootViewController: CityWeatherViewController(city: city)))
+        pageControl.numberOfPages = pages.count
+        pageControl.currentPage = initialPage + 1
+        locationLabel.text = city.cityName
+        setViewControllers([pages[initialPage + 1]], direction: .forward, animated: true, completion: nil)
+    }
+    
+}
+
+//extension UIPageViewController {
+//    func goToNextPage(animated: Bool = true, completion: ((Bool) -> Void)? = nil) {
+//        if let currentViewController = viewControllers?[0] {
+//            if let nextPage = dataSource?.pageViewController(self, viewControllerAfter: currentViewController) {
+//                setViewControllers([nextPage], direction: .forward, animated: animated, completion: completion)
+//            }
+//        }
+//    }
+//}
 
 

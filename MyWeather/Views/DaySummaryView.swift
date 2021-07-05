@@ -52,6 +52,14 @@ final class DaySummaryView: UIView {
         return iv
     }()
     
+    lazy var spinner: UIActivityIndicatorView = {
+        let spinner = UIActivityIndicatorView()
+        spinner.style = .medium
+        spinner.color = .white
+        spinner.hidesWhenStopped = true
+        return spinner
+    }()
+    
     private lazy var dayNightTemperatureLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16, weight: .regular)
@@ -217,6 +225,15 @@ final class DaySummaryView: UIView {
             make.centerX.equalToSuperview()
             make.width.equalTo(280)
             make.height.equalTo(125)
+        }
+        
+        daySummaryContentView.addSubview(spinner)
+        
+        spinner.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(8)
+            make.leading.equalToSuperview().offset(8)
+            make.width.equalTo(15)
+            make.height.equalTo(15)
         }
         
         daySummaryContentView.addSubview(dayNightTemperatureLabel)
