@@ -10,12 +10,14 @@ import SnapKit
 
 final class DaySummaryView: UIView {
     
+    var options = OptionsStack(temperature: .celsius, winSpeed: .kilometers, timeFormat: .hours24)
+    
     var weather: Weather? {
         didSet {
             guard let weather = weather else { return }
             
-            dayNightTemperatureLabel.text = String(format: "%.0f", floor(weather.daily[0].temp.day)) + "°/" + String(format: "%.0f", floor(weather.daily[0].temp.night) ) + "°"
-            currentTemperatureLabel.text = String(format: "%.0f", floor(weather.current.temp)) + "°"
+            dayNightTemperatureLabel.text = String(format: "%.0f", floor(convertTemperature(weather.daily[0].temp.day, to: options.temperature))) + "°/" + String(format: "%.0f", floor(convertTemperature(weather.daily[0].temp.night, to: options.temperature)) ) + "°"
+            currentTemperatureLabel.text = String(format: "%.0f", floor(convertTemperature(weather.current.temp, to: options.temperature))) + "°"
             downfallTitleLabel.text = String(weather.current.weather[0].weatherDescription)
             
             if let rainMetric = weather.daily[0].rain {
@@ -26,13 +28,67 @@ final class DaySummaryView: UIView {
                 downfallMetricLabel.text = "0"
             }
             
-            windMetricLabel.text = String(format: "%.0f", floor(weather.current.windSpeed)) + " м/с"
+            windMetricLabel.text = String(format: "%.0f", floor(convertWindSpeed(weather.current.windSpeed, to: options.winSpeed))) + " м/с"
             rainMetricLabel.text = String(format: "%.0f", floor(weather.daily[0].pop * 100)) + "%"
             
-            sunriseTimeLabel.text = dateToString(weather.current.sunrise + weather.timezoneOffset, withFormat: "HH:mm")
-            sunsetTimeLabel.text = dateToString(weather.current.sunset + weather.timezoneOffset, withFormat: "HH:mm")
+            var timeFormat = "HH:mm"
+            if options.timeFormat == .hours12 {
+                timeFormat = "h:mm a"
+            }
+            sunriseTimeLabel.text = dateToString(weather.current.sunrise + weather.timezoneOffset, withFormat: timeFormat)
+            sunsetTimeLabel.text = dateToString(weather.current.sunset + weather.timezoneOffset, withFormat: timeFormat)
             
-            dateLabel.text = dateToString(weather.current.dt + weather.timezoneOffset, withFormat: "HH:mm, E dd MMM")
+            dateLabel.text = dateToString(weather.current.dt + weather.timezoneOffset, withFormat: timeFormat + ", E dd MMM")
+            
+        }
+    }
+    
+    var weatherFromDB: WeatherCached? {
+        didSet {
+            guard let weatherFromDB = weatherFromDB else { return }
+            
+            if let dayTemp = weatherFromDB.daily[0].temp.day, let nightTemp = weatherFromDB.daily[0].temp.night {
+                dayNightTemperatureLabel.text = String(format: "%.0f", floor(convertTemperature(dayTemp, to: options.temperature))) + "°/" + String(format: "%.0f", floor(convertTemperature(nightTemp, to: options.temperature)) ) + "°"
+            }
+            
+            if let currentTemp = weatherFromDB.current.temp {
+                currentTemperatureLabel.text = String(format: "%.0f", floor(convertTemperature(currentTemp, to: options.temperature))) + "°"
+            }
+            
+            if let weatherElements = weatherFromDB.current.weather {
+                downfallTitleLabel.text = String(weatherElements[0].weatherDescription)
+            }
+            
+            if let rainMetric = weatherFromDB.daily[0].rain {
+                downfallMetricLabel.text = String(format: "%.0f", floor(rainMetric))
+            } else if let snowMetric = weatherFromDB.daily[0].snow {
+                downfallMetricLabel.text = String(format: "%.0f", floor(snowMetric))
+            } else {
+                downfallMetricLabel.text = "0"
+            }
+            
+            if let windSpeed = weatherFromDB.current.windSpeed {
+                windMetricLabel.text = String(format: "%.0f", floor(convertWindSpeed(windSpeed, to: options.winSpeed))) + " м/с"
+            }
+            
+            rainMetricLabel.text = String(format: "%.0f", floor(weatherFromDB.daily[0].pop * 100)) + "%"
+            
+            var timeFormat = "HH:mm"
+            if options.timeFormat == .hours12 {
+                timeFormat = "h:mm a"
+            }
+            
+            if let sunrise = weatherFromDB.current.sunrise {
+                sunriseTimeLabel.text = dateToString(sunrise + weatherFromDB.timezoneOffset, withFormat: timeFormat)
+            }
+            
+            if let sunset = weatherFromDB.current.sunset {
+                sunsetTimeLabel.text = dateToString(sunset + weatherFromDB.timezoneOffset, withFormat: timeFormat)
+            }
+            
+            if let dt = weatherFromDB.current.dt {
+                dateLabel.text = dateToString(dt + weatherFromDB.timezoneOffset, withFormat: timeFormat + ", E dd MMM")
+            }
             
         }
     }
@@ -65,7 +121,7 @@ final class DaySummaryView: UIView {
         label.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         label.textColor = UIColor(hex: "#F8F5F5")
         label.numberOfLines = 1
-        label.text = "7°/13°"
+        label.text = "-°/-°"
         return label
     }()
     
@@ -74,7 +130,7 @@ final class DaySummaryView: UIView {
         label.font = UIFont.systemFont(ofSize: 36, weight: .bold)
         label.textColor = UIColor(hex: "#F8F5F5")
         label.numberOfLines = 1
-        label.text = "13°"
+        label.text = "-°"
         return label
     }()
     
@@ -84,7 +140,7 @@ final class DaySummaryView: UIView {
         label.textColor = UIColor(hex: "#F8F5F5")
         label.numberOfLines = 1
         label.textAlignment = .center
-        label.text = "Возможен небольшой дождь"
+        label.text = "нет данных для города"
         return label
     }()
     
@@ -108,7 +164,7 @@ final class DaySummaryView: UIView {
         label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         label.textColor = UIColor(hex: "#F8F5F5")
         label.numberOfLines = 1
-        label.text = "0"
+        label.text = "-"
         return label
     }()
     
@@ -130,7 +186,7 @@ final class DaySummaryView: UIView {
         label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         label.textColor = UIColor(hex: "#F8F5F5")
         label.numberOfLines = 1
-        label.text = "3 м/с"
+        label.text = "- м/с"
         return label
     }()
     
@@ -152,7 +208,7 @@ final class DaySummaryView: UIView {
         label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         label.textColor = UIColor(hex: "#F8F5F5")
         label.numberOfLines = 1
-        label.text = "75%"
+        label.text = "--%"
         return label
     }()
     
@@ -161,7 +217,7 @@ final class DaySummaryView: UIView {
         label.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         label.textColor = UIColor(hex: "#F6DD01")
         label.numberOfLines = 1
-        label.text = "17:48, пт 16 апреля"
+        label.text = "--"
         return label
     }()
     
@@ -185,7 +241,7 @@ final class DaySummaryView: UIView {
         label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
         label.textColor = UIColor(hex: "#FFFFFF")
         label.numberOfLines = 1
-        label.text = "05:41"
+        label.text = "--:--"
         return label
     }()
     
@@ -194,7 +250,7 @@ final class DaySummaryView: UIView {
         label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
         label.textColor = UIColor(hex: "#FFFFFF")
         label.numberOfLines = 1
-        label.text = "19:31"
+        label.text = "--:--"
         return label
     }()
     
@@ -290,7 +346,7 @@ final class DaySummaryView: UIView {
             make.centerY.equalToSuperview()
             make.leading.equalTo(windImage.snp.trailing).offset(3)
             make.trailing.equalToSuperview()
-            make.width.equalTo(40)
+            make.width.equalTo(45)
         }
         
         // rain

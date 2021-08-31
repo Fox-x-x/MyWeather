@@ -8,10 +8,13 @@
 import UIKit
 import Hex
 import SnapKit
+import CoreLocation
 
 class OnBoardingViewController: UIViewController {
     
     weak var coordinator: MainCoordinator?
+    
+    var locationManager: CLLocationManager?
     
     // MARK: - UI Elements
     
@@ -161,7 +164,19 @@ class OnBoardingViewController: UIViewController {
     
     @objc private func useLocationButtonPressed() {
         print("use location pressed!")
-        coordinator?.navigationController.popToRootViewController(animated: true)
+        
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+        
+        if locationManager?.authorizationStatus == .authorizedAlways {
+            print("authorizedWhenInUse")
+        } else {
+            locationManager?.requestAlwaysAuthorization()
+        }
+        
+        
+        
+//        coordinator?.navigationController.popToRootViewController(animated: true)
     }
     
     @objc private func addLocationsManuallyButtonPressed() {
@@ -177,5 +192,36 @@ extension OnBoardingViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         print(scrollView.contentOffset.y)
     }
+}
+
+extension OnBoardingViewController: CLLocationManagerDelegate {
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        print("did change status")
+        
+        if CLLocationManager.locationServicesEnabled() == true {
+            
+            if manager.authorizationStatus == .denied {
+                // user denied authorization
+                print("user denied authorization")
+            } else if manager.authorizationStatus == .authorizedAlways {
+                // user accepted authorization
+                print("user accepted authorization")
+                coordinator?.navigationController.popToRootViewController(animated: true)
+            } else if manager.authorizationStatus == .notDetermined {
+                // user didn't determined authorization
+                print("user didn't determined authorization")
+            } else if manager.authorizationStatus == .authorizedWhenInUse {
+                // in use
+                print("in use")
+            }
+            
+        } else {
+            //Access to user location permission denied!
+            print("Access to user location permission denied!")
+        }
+        
+    }
+    
 }
 

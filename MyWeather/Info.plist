@@ -39,5 +39,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Нам нужны данные о местоположении, чтобы показывать погоду для вашего региона</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Нам нужно знать где вы находитесь, чтобы показывать правильную погоду</string>
 </dict>
 </plist>

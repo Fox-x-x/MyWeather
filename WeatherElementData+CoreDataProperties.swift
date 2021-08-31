@@ -17,7 +17,7 @@ extension WeatherElementData {
     }
 
     @NSManaged public var id: Int16
-    @NSManaged public var weatherDescription: String?
+    @NSManaged public var weatherDescription: String
     @NSManaged public var currentData: CurrentData?
     @NSManaged public var hourData: HourData?
     @NSManaged public var dayData: DayData?

@@ -19,6 +19,7 @@ final class MainCoordinator: Coordinator {
     
     func start() {
         let vc = MainScreenViewController()
+//        let vc = OnBoardingViewController()
         vc.coordinator = self
         navigationController.pushViewController(vc, animated: true)
     }
@@ -33,6 +34,22 @@ final class MainCoordinator: Coordinator {
         let vc = OnBoardingViewController()
         vc.coordinator = self
         navigationController.pushViewController(vc, animated: true)
+    }
+    
+    func gotoDailyWeather(city: CityWeather, dayNumber: IndexPath) {
+        let vc = DailyWeatherViewController(city: city, dayNumber: dayNumber)
+        vc.coordinator = self
+        navigationController.pushViewController(vc, animated: true)
+    }
+    
+    func goto24HoursWeather(city: CityWeather) {
+        let vc = Weather24HoursViewController(city: city)
+        vc.coordinator = self
+        navigationController.pushViewController(vc, animated: true)
+    }
+    
+    func goBack() {
+        navigationController.popViewController(animated: true)
     }
     
     

@@ -18,7 +18,7 @@ extension WeatherData {
 
     @NSManaged public var lat: Double
     @NSManaged public var lon: Double
-    @NSManaged public var timezone: String?
+    @NSManaged public var timezone: String
     @NSManaged public var timezoneOffset: Double
     @NSManaged public var city: CityWeather?
     @NSManaged public var current: CurrentData?

@@ -68,9 +68,9 @@ struct geoObject: Codable {
         let points = point.pos.split(separator: " ")
         if points.count == 2 {
             if coordinateName == .lat {
-                return String(points[0])
-            } else {
                 return String(points[1])
+            } else {
+                return String(points[0])
             }
         }
         return ""

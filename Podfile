@@ -6,5 +6,6 @@ target 'MyWeather' do
   # Pods for MyWeather
   pod 'SnapKit', '~> 5.0.1'
   pod 'Hex'
+  pod 'Charts'
 
 end

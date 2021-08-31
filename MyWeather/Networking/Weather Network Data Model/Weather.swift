@@ -7,7 +7,7 @@
 
 import Foundation
 
-public final class Weather: Codable {
+struct Weather: Codable {
     
     let lat, lon: Double
     let timezone: String

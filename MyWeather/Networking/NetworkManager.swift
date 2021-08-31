@@ -63,7 +63,7 @@ final class NetworkManager {
 //                    print("lat: \(city?.response.geoObjectCollection.featureMember[0].geoObject.lat)")
 //                    print("lon: \(city?.response.geoObjectCollection.featureMember[0].geoObject.lon)")
                 case .failure(let error):
-                    print(error)
+//                    print(error)
                     vc.cityLocationDelegate?.didFailWithError(error: error)
                 }
             }
@@ -83,7 +83,7 @@ final class NetworkManager {
                 let task = self.session.dataTask(with: url) { data, response, error in
                     
                     guard error == nil else {
-                        print("dataTask error:\n \(error.debugDescription)")
+//                        print("dataTask error:\n \(error.debugDescription)")
                         completion(.failure(.networkError))
                         return
                     }

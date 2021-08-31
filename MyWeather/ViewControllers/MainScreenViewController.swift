@@ -7,12 +7,15 @@
 
 import UIKit
 import SnapKit
+import CoreData
 
 class MainScreenViewController: UIPageViewController {
     
     weak var coordinator: MainCoordinator?
     
     private var cities = [CityWeather]()
+    
+    private var geolocationAllowed = true
     
     private var cityManagerViewController: AddCityViewController?
     
@@ -31,7 +34,6 @@ class MainScreenViewController: UIPageViewController {
         let pageControl = UIPageControl()
         pageControl.currentPageIndicatorTintColor = .black
         pageControl.pageIndicatorTintColor = .systemGray2
-//        pageControl.numberOfPages = pages.count
         pageControl.addTarget(self, action: #selector(pageControlTapped(_:)), for: .valueChanged)
         return pageControl
     }()
@@ -91,7 +93,18 @@ class MainScreenViewController: UIPageViewController {
         
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        print("MainScreenWillAppear")
+    }
+    
     private func setupPages() {
+        
+        let request: NSFetchRequest<CityWeather> = CityWeather.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: "self", ascending: false)
+        request.sortDescriptors = [sortDescriptor]
+        cities = coreDataManager.fetchDataWithRequest(for: CityWeather.self, with: coreDataManager.context, request: request)
         
         let cityManagerViewController = AddCityViewController(coreDataManager: coreDataManager)
         cityManagerViewController.delegate = self
@@ -99,7 +112,9 @@ class MainScreenViewController: UIPageViewController {
         pages.append(UINavigationController(rootViewController: cityManagerViewController))
         
         for city in cities {
-            pages.append(UINavigationController(rootViewController: CityWeatherViewController(city: city)))
+            let cityWeatherViewController = CityWeatherViewController(city: city)
+            cityWeatherViewController.coordinator = coordinator
+            pages.append(UINavigationController(rootViewController: cityWeatherViewController))
         }
         
         print("pages count = \(pages.count)")
@@ -214,8 +229,12 @@ extension MainScreenViewController: AddCityManagerDelegate {
     
     func didAddCity(city: CityWeather) {
         print("city has been added: \(city.cityName)")
-        cities.append(city)
-        pages.append(UINavigationController(rootViewController: CityWeatherViewController(city: city)))
+        cities.insert(city, at: 0)
+        
+        let cityWeatherVC = CityWeatherViewController(city: city)
+        cityWeatherVC.coordinator = coordinator
+        
+        pages.insert(UINavigationController(rootViewController: cityWeatherVC), at: 1)
         pageControl.numberOfPages = pages.count
         pageControl.currentPage = initialPage + 1
         locationLabel.text = city.cityName
@@ -223,15 +242,5 @@ extension MainScreenViewController: AddCityManagerDelegate {
     }
     
 }
-
-//extension UIPageViewController {
-//    func goToNextPage(animated: Bool = true, completion: ((Bool) -> Void)? = nil) {
-//        if let currentViewController = viewControllers?[0] {
-//            if let nextPage = dataSource?.pageViewController(self, viewControllerAfter: currentViewController) {
-//                setViewControllers([nextPage], direction: .forward, animated: animated, completion: completion)
-//            }
-//        }
-//    }
-//}
 
 

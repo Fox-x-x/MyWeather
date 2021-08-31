@@ -12,6 +12,8 @@ class SettingsViewController: UIViewController {
     
     weak var coordinator: MainCoordinator?
     
+    private let defaults = UserDefaults.standard
+    
     // MARK: - UI Elements: background
     
     private lazy var backgroundView: UIView = {
@@ -97,6 +99,7 @@ class SettingsViewController: UIViewController {
         navigationController?.isNavigationBarHidden = true
         
         setupLayout()
+        loadSettings()
     }
     
     // MARK: - Layout
@@ -216,8 +219,59 @@ class SettingsViewController: UIViewController {
     // MARK: - Functions
     
     @objc private func saveButtonPressed() {
+        saveSettings()
         print("saved")
         coordinator?.navigationController.popToRootViewController(animated: true)
+    }
+    
+    private func saveSettings() {
+        if let options = optionsValuesStackView.arrangedSubviews as? [UISegmentedControl] {
+            
+            let temperatureIndex = options[0].selectedSegmentIndex
+            let temperatureFormat = OptionsStorage.options[0].values[temperatureIndex]
+            defaults.setValue(temperatureFormat, forKey: Options.temperature.rawValue)
+            
+            let windSpeedIndex = options[1].selectedSegmentIndex
+            let windSpeedFormat = OptionsStorage.options[1].values[windSpeedIndex]
+            defaults.setValue(windSpeedFormat, forKey: Options.windSpeed.rawValue)
+            
+            let timeIndex = options[2].selectedSegmentIndex
+            let timeFormat = OptionsStorage.options[2].values[timeIndex]
+            defaults.setValue(timeFormat, forKey: Options.timeFormat.rawValue)
+            
+        }
+    }
+    
+    private func loadSettings() {
+        
+        if let options = optionsValuesStackView.arrangedSubviews as? [UISegmentedControl] {
+            
+            let temperatureFormat = defaults.object(forKey: Options.temperature.rawValue) as? String ?? "C"
+            if temperatureFormat == "C" {
+                options[0].selectedSegmentIndex = 0
+            } else {
+                options[0].selectedSegmentIndex = 1
+            }
+            
+            let windSpeed = defaults.object(forKey: Options.windSpeed.rawValue) as? String ?? "Km"
+            if windSpeed == "Km" {
+                options[1].selectedSegmentIndex = 1
+            } else {
+                options[1].selectedSegmentIndex = 0
+            }
+            
+            let timeFormat = defaults.object(forKey: Options.timeFormat.rawValue) as? String ?? "24"
+            if timeFormat == "24" {
+                options[2].selectedSegmentIndex = 1
+            } else {
+                options[2].selectedSegmentIndex = 0
+            }
+            
+            // нет их :)
+            options[3].selectedSegmentIndex = 1
+            
+        }
+        
     }
 
 }
