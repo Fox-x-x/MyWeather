@@ -30,8 +30,8 @@ final class MainCoordinator: Coordinator {
         navigationController.pushViewController(vc, animated: true)
     }
     
-    func gotoOnBoarding() {
-        let vc = OnBoardingViewController()
+    func gotoOnBoarding(vc: OnBoardingViewController) {
+//        let vc = OnBoardingViewController()
         vc.coordinator = self
         navigationController.pushViewController(vc, animated: true)
     }

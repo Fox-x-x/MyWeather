@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import CoreData
+import CoreLocation
 
 class MainScreenViewController: UIPageViewController {
     
@@ -15,9 +16,13 @@ class MainScreenViewController: UIPageViewController {
     
     private var cities = [CityWeather]()
     
+    private var locationManager: CLLocationManager?
     private var geolocationAllowed = true
     
+    private let defaults = UserDefaults.standard
+    
     private var cityManagerViewController: AddCityViewController?
+    private var onBoardingViewController = OnBoardingViewController()
     
     private let coreDataManager = CoreDataStack()
     
@@ -82,6 +87,23 @@ class MainScreenViewController: UIPageViewController {
         
         dataSource = self
         delegate = self
+        onBoardingViewController.delegate = self
+        
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+        
+        if locationManager?.authorizationStatus == .authorizedAlways {
+            print("In authorizedWhenInUse mode now")
+            geolocationAllowed = true
+        }
+        
+        if geolocationAllowed {
+            // 1. берем из БД город geolocated:
+            // - проверяем есть ли он. Если нет, создаем новый и добавляем (произойдет 1 раз при 1-ом запуске приложения)
+            // - кладем этот city в pages
+        } else {
+            
+        }
         
         setupPages()
         pageControl.currentPage = initialPage
@@ -89,7 +111,7 @@ class MainScreenViewController: UIPageViewController {
         
         navigationController?.isNavigationBarHidden = true
         
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
     }
     
@@ -97,6 +119,18 @@ class MainScreenViewController: UIPageViewController {
         super.viewWillAppear(animated)
         
         print("MainScreenWillAppear")
+        
+        // проверяем запускалось ли уже приложение и нужно ли показывать онбординг
+        if let appHasBeenLaunched = defaults.object(forKey: "hasBeenLaunched") as? Bool {
+            if !appHasBeenLaunched {
+                defaults.setValue(true, forKey: "hasBeenLaunched")
+                coordinator?.gotoOnBoarding(vc: onBoardingViewController)
+            }
+        } else {
+            defaults.setValue(true, forKey: "hasBeenLaunched")
+            coordinator?.gotoOnBoarding(vc: onBoardingViewController)
+        }
+        
     }
     
     private func setupPages() {
@@ -110,6 +144,10 @@ class MainScreenViewController: UIPageViewController {
         cityManagerViewController.delegate = self
         
         pages.append(UINavigationController(rootViewController: cityManagerViewController))
+        
+        if geolocationAllowed {
+            // здесь вставлять гео VC
+        }
         
         for city in cities {
             let cityWeatherViewController = CityWeatherViewController(city: city)
@@ -176,7 +214,8 @@ class MainScreenViewController: UIPageViewController {
     
     @objc private func locationButtonPressed() {
         print("locations pressed!")
-        coordinator?.gotoOnBoarding()
+//        coordinator?.gotoOnBoarding()
+        coordinator?.gotoOnBoarding(vc: onBoardingViewController)
     }
     
     @objc private func pageControlTapped(_ sender: UIPageControl) {
@@ -240,6 +279,21 @@ extension MainScreenViewController: AddCityManagerDelegate {
         locationLabel.text = city.cityName
         setViewControllers([pages[initialPage + 1]], direction: .forward, animated: true, completion: nil)
     }
+    
+}
+
+extension MainScreenViewController: LocationStatusChangesDelegate {
+    
+    func locationStatusDidChange(status: CLAuthorizationStatus) {
+        print("status: \(status)")
+        if status == .authorizedAlways {
+            print(".authorizedAlways")
+        }
+    }
+    
+}
+
+extension MainScreenViewController: CLLocationManagerDelegate {
     
 }
 

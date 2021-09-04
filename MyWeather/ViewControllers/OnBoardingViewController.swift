@@ -10,11 +10,19 @@ import Hex
 import SnapKit
 import CoreLocation
 
+protocol LocationStatusChangesDelegate {
+    func locationStatusDidChange(status: CLAuthorizationStatus)
+}
+
 class OnBoardingViewController: UIViewController {
     
     weak var coordinator: MainCoordinator?
     
-    var locationManager: CLLocationManager?
+    private var locationManager: CLLocationManager?
+    
+    var delegate: LocationStatusChangesDelegate?
+    
+    private let defaults = UserDefaults.standard
     
     // MARK: - UI Elements
     
@@ -98,6 +106,14 @@ class OnBoardingViewController: UIViewController {
         
         setupLayout()
         
+        // проверяем запускалось ли уже приложение
+        if let appHasBeenLaunched = defaults.object(forKey: "hasBeenLaunched") as? Bool {
+            if !appHasBeenLaunched {
+                defaults.setValue(true, forKey: "hasBeenLaunched")
+            }
+        }
+        
+        
     }
     
     // MARK: - Layout
@@ -169,12 +185,10 @@ class OnBoardingViewController: UIViewController {
         locationManager?.delegate = self
         
         if locationManager?.authorizationStatus == .authorizedAlways {
-            print("authorizedWhenInUse")
+            print("authorizedWhenInUse pressed")
         } else {
             locationManager?.requestAlwaysAuthorization()
         }
-        
-        
         
 //        coordinator?.navigationController.popToRootViewController(animated: true)
     }
@@ -197,23 +211,26 @@ extension OnBoardingViewController: UIScrollViewDelegate {
 extension OnBoardingViewController: CLLocationManagerDelegate {
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        print("did change status")
         
         if CLLocationManager.locationServicesEnabled() == true {
             
             if manager.authorizationStatus == .denied {
                 // user denied authorization
                 print("user denied authorization")
+                delegate?.locationStatusDidChange(status: .denied)
             } else if manager.authorizationStatus == .authorizedAlways {
                 // user accepted authorization
                 print("user accepted authorization")
+                delegate?.locationStatusDidChange(status: .authorizedAlways)
                 coordinator?.navigationController.popToRootViewController(animated: true)
             } else if manager.authorizationStatus == .notDetermined {
                 // user didn't determined authorization
                 print("user didn't determined authorization")
+                delegate?.locationStatusDidChange(status: .notDetermined)
             } else if manager.authorizationStatus == .authorizedWhenInUse {
                 // in use
                 print("in use")
+                delegate?.locationStatusDidChange(status: .authorizedWhenInUse)
             }
             
         } else {

@@ -220,7 +220,6 @@ class SettingsViewController: UIViewController {
     
     @objc private func saveButtonPressed() {
         saveSettings()
-        print("saved")
         coordinator?.navigationController.popToRootViewController(animated: true)
     }
     
