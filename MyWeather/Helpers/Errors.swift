@@ -12,6 +12,7 @@ enum ApiError: Error {
     case other
     case networkError
     case cityNotFound
+    case locationNotFound
 }
 
 func handleApiError(error: ApiError, vc: UIViewController) {
@@ -22,6 +23,8 @@ func handleApiError(error: ApiError, vc: UIViewController) {
         Alert.showAlertError(title: "Oops!", message: "Произошла ошибка сетевого запроса", on: vc)
     case .cityNotFound:
         Alert.showAlertError(title: "Oops!", message: "Город не найден", on: vc)
+    case .locationNotFound:
+        Alert.showAlertError(title: "Oops!", message: "Невозможно получить данные о местонахождении", on: vc)
     
     }
     

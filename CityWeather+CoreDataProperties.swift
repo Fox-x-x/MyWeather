@@ -15,7 +15,8 @@ extension CityWeather {
     @nonobjc public class func fetchRequest() -> NSFetchRequest<CityWeather> {
         return NSFetchRequest<CityWeather>(entityName: "CityWeather")
     }
-
+    
+    @NSManaged public var geolocated: Bool
     @NSManaged public var cityName: String
     @NSManaged public var countryName: String
     @NSManaged public var lat: String

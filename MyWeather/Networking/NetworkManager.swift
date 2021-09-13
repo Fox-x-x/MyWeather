@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 
 protocol WeatherManagerDelegate {
     func didUpdateWeather(_ weatherManager: NetworkManager, weather: Weather)
@@ -35,19 +36,18 @@ final class NetworkManager {
         
         weatherDataDelegate?.didBeginNetworkActivity()
         
-        performRequest(with: url) { [weak self] result in
-            if let vc = self {
-                switch result {
-                case .success(let data):
-                    if let weather = vc.parseJSON(weatherData: data) {
-                        vc.weatherDataDelegate?.didUpdateWeather(vc, weather: weather)
-                    }
-                case .failure(let error):
-                    vc.weatherDataDelegate?.didFailWithError(error: error)
-                }
-            }
-        }
+        performWeatherUpdateRequest(url: url)
 
+    }
+    
+    func fetchWeather(lat: CLLocationDegrees, lon: CLLocationDegrees) {
+        
+        let url = baseURL + "lat=\(lat)" + "&" + "lon=\(lon)" + params + apiKey
+        
+        weatherDataDelegate?.didBeginNetworkActivity()
+        
+        performWeatherUpdateRequest(url: url)
+        
     }
     
     func fetchCityLocation(cityName city: String) {
@@ -59,11 +59,7 @@ final class NetworkManager {
                     if let city = vc.parseJSON(location: data) {
                         vc.cityLocationDelegate?.didReceiveCityData(vc, cityData: city)
                     }
-//                    print("parsed city info: \(String(describing: city))")
-//                    print("lat: \(city?.response.geoObjectCollection.featureMember[0].geoObject.lat)")
-//                    print("lon: \(city?.response.geoObjectCollection.featureMember[0].geoObject.lon)")
                 case .failure(let error):
-//                    print(error)
                     vc.cityLocationDelegate?.didFailWithError(error: error)
                 }
             }
@@ -83,7 +79,6 @@ final class NetworkManager {
                 let task = self.session.dataTask(with: url) { data, response, error in
                     
                     guard error == nil else {
-//                        print("dataTask error:\n \(error.debugDescription)")
                         completion(.failure(.networkError))
                         return
                     }
@@ -122,6 +117,21 @@ final class NetworkManager {
             return decodedData
         } catch {
             return nil
+        }
+    }
+    
+    func performWeatherUpdateRequest(url: String) {
+        performRequest(with: url) { [weak self] result in
+            if let vc = self {
+                switch result {
+                case .success(let data):
+                    if let weather = vc.parseJSON(weatherData: data) {
+                        vc.weatherDataDelegate?.didUpdateWeather(vc, weather: weather)
+                    }
+                case .failure(let error):
+                    vc.weatherDataDelegate?.didFailWithError(error: error)
+                }
+            }
         }
     }
 

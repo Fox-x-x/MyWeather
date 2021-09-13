@@ -16,8 +16,10 @@ class MainScreenViewController: UIPageViewController {
     
     private var cities = [CityWeather]()
     
+    private var weatherManager = NetworkManager()
+    
     private var locationManager: CLLocationManager?
-    private var geolocationAllowed = true
+    private var geolocationAllowed = false
     
     private let defaults = UserDefaults.standard
     
@@ -81,44 +83,46 @@ class MainScreenViewController: UIPageViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
+    // MARK: - viewDidLoad
     override func viewDidLoad() {
         super.viewDidLoad()
         
         dataSource = self
         delegate = self
         onBoardingViewController.delegate = self
+//        weatherManager.weatherDataDelegate = self
         
         locationManager = CLLocationManager()
-        locationManager?.delegate = self
+//        locationManager?.delegate = self
         
-        if locationManager?.authorizationStatus == .authorizedAlways {
-            print("In authorizedWhenInUse mode now")
-            geolocationAllowed = true
-        }
+        NotificationCenter.default.addObserver(self, selector: #selector(appMovedFromBackground), name: UIApplication.didBecomeActiveNotification, object: nil)
         
-        if geolocationAllowed {
-            // 1. берем из БД город geolocated:
-            // - проверяем есть ли он. Если нет, создаем новый и добавляем (произойдет 1 раз при 1-ом запуске приложения)
-            // - кладем этот city в pages
-        } else {
-            
-        }
+//        if locationManager?.authorizationStatus == .authorizedAlways {
+//            print("In authorizedWhenInUse mode now")
+//            geolocationAllowed = true
+//            locationButton.isEnabled = false
+//        } else {
+//            print("auth is not allowed")
+//        }
         
+        checkAuthStatus()
         setupPages()
-        pageControl.currentPage = initialPage
         setupLayout()
         
         navigationController?.isNavigationBarHidden = true
         
-//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
     }
     
+    // MARK: - viewWillAppear
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         print("MainScreenWillAppear")
+        
+//        checkAuthStatus()
         
         // проверяем запускалось ли уже приложение и нужно ли показывать онбординг
         if let appHasBeenLaunched = defaults.object(forKey: "hasBeenLaunched") as? Bool {
@@ -133,9 +137,28 @@ class MainScreenViewController: UIPageViewController {
         
     }
     
+    @objc private func appMovedFromBackground() {
+        if locationManager?.authorizationStatus == .authorizedAlways {
+            print("In authorizedWhenInUse mode now")
+            geolocationAllowed = true
+            locationButton.isEnabled = false
+            pages = []
+            setupPages()
+        } else {
+            print("auth is not allowed")
+            geolocationAllowed = false
+            locationButton.isEnabled = true
+            pages = []
+            setupPages()
+        }
+    }
+    
+    // MARK: - setupPages
     private func setupPages() {
         
         let request: NSFetchRequest<CityWeather> = CityWeather.fetchRequest()
+        let predicate = NSPredicate(format: "geolocated = %d", false)
+        request.predicate = predicate
         let sortDescriptor = NSSortDescriptor(key: "self", ascending: false)
         request.sortDescriptors = [sortDescriptor]
         cities = coreDataManager.fetchDataWithRequest(for: CityWeather.self, with: coreDataManager.context, request: request)
@@ -145,8 +168,34 @@ class MainScreenViewController: UIPageViewController {
         
         pages.append(UINavigationController(rootViewController: cityManagerViewController))
         
+        // если разрешена геолокация, тогда вставляем в pages еще один CityWeatherVC для геоГорода
         if geolocationAllowed {
-            // здесь вставлять гео VC
+            
+            let request: NSFetchRequest<CityWeather> = CityWeather.fetchRequest()
+            let predicate = NSPredicate(format: "geolocated = %d", true)
+            request.predicate = predicate
+            let geolocatedCities = coreDataManager.fetchDataWithRequest(for: CityWeather.self, with: coreDataManager.context, request: request)
+            
+            if geolocatedCities.isEmpty {
+                // если ГеоГорода еще нет, тогда вошли в режим геолокации в 1-ый раз и нужно создать для этого "город"
+                let geolocatedCity = coreDataManager.createObject(from: CityWeather.self, with: coreDataManager.context)
+                
+                geolocatedCity.geolocated = true
+                geolocatedCity.cityName = "Текущее местоположение"
+                geolocatedCity.countryName = ""
+                geolocatedCity.lat = ""
+                geolocatedCity.lon = ""
+                
+                coreDataManager.save(context: coreDataManager.context)
+                
+                cities.insert(geolocatedCity, at: 0)
+
+            } else {
+                if let geolocatedCity = geolocatedCities.first {
+                    cities.insert(geolocatedCity, at: 0)
+                }
+            }
+            
         }
         
         for city in cities {
@@ -155,11 +204,21 @@ class MainScreenViewController: UIPageViewController {
             pages.append(UINavigationController(rootViewController: cityWeatherViewController))
         }
         
-        print("pages count = \(pages.count)")
         pageControl.numberOfPages = pages.count
-        setViewControllers([pages[initialPage]], direction: .forward, animated: true, completion: nil)
+        
+        if geolocationAllowed {
+            locationLabel.text = "Текущее местоположение"
+            pageControl.currentPage = initialPage + 1
+            setViewControllers([pages[initialPage + 1]], direction: .forward, animated: true, completion: nil)
+        } else {
+            locationLabel.text = ""
+            pageControl.currentPage = initialPage
+            setViewControllers([pages[initialPage]], direction: .forward, animated: true, completion: nil)
+        }
+        
     }
     
+    // MARK: - Layout
     private func setupLayout() {
         
         view.addSubview(controlsContentView)
@@ -221,8 +280,22 @@ class MainScreenViewController: UIPageViewController {
     @objc private func pageControlTapped(_ sender: UIPageControl) {
         setViewControllers([pages[sender.currentPage]], direction: .forward, animated: true, completion: nil)
     }
+    
+    private func checkAuthStatus() {
+        if locationManager?.authorizationStatus == .authorizedAlways {
+            print("In authorizedWhenInUse mode now")
+            geolocationAllowed = true
+            locationButton.isEnabled = false
+        } else {
+            print("auth is not allowed")
+            geolocationAllowed = false
+            locationButton.isEnabled = true
+        }
+    }
 
 }
+
+// MARK: - extensions
 
 extension MainScreenViewController: UIPageViewControllerDataSource {
     
@@ -257,7 +330,11 @@ extension MainScreenViewController: UIPageViewControllerDelegate {
         guard let viewControllers = pageViewController.viewControllers else { return }
         guard let currentIndex = pages.firstIndex(of: viewControllers[0]) else { return }
         
-        locationLabel.text = pages[currentIndex].title
+        if pages[currentIndex].title == "" {
+            locationLabel.text = "Текущее местоположение"
+        } else {
+            locationLabel.text = pages[currentIndex].title
+        }
         
         pageControl.currentPage = currentIndex
     }
@@ -268,33 +345,148 @@ extension MainScreenViewController: AddCityManagerDelegate {
     
     func didAddCity(city: CityWeather) {
         print("city has been added: \(city.cityName)")
-        cities.insert(city, at: 0)
         
         let cityWeatherVC = CityWeatherViewController(city: city)
         cityWeatherVC.coordinator = coordinator
         
-        pages.insert(UINavigationController(rootViewController: cityWeatherVC), at: 1)
-        pageControl.numberOfPages = pages.count
-        pageControl.currentPage = initialPage + 1
-        locationLabel.text = city.cityName
-        setViewControllers([pages[initialPage + 1]], direction: .forward, animated: true, completion: nil)
+        if geolocationAllowed {
+            cities.insert(city, at: 1)
+            pages.insert(UINavigationController(rootViewController: cityWeatherVC), at: 2)
+            pageControl.numberOfPages = pages.count
+            pageControl.currentPage = initialPage + 2
+            locationLabel.text = city.cityName
+            setViewControllers([pages[initialPage + 2]], direction: .forward, animated: true, completion: nil)
+        } else {
+            cities.insert(city, at: 0)
+            pages.insert(UINavigationController(rootViewController: cityWeatherVC), at: 1)
+            pageControl.numberOfPages = pages.count
+            pageControl.currentPage = initialPage + 1
+            locationLabel.text = city.cityName
+            setViewControllers([pages[initialPage + 1]], direction: .forward, animated: true, completion: nil)
+        }
+        
+        
     }
     
 }
 
 extension MainScreenViewController: LocationStatusChangesDelegate {
     
-    func locationStatusDidChange(status: CLAuthorizationStatus) {
-        print("status: \(status)")
+    func locationAuthStatusDidChange(status: CLAuthorizationStatus) {
+        
         if status == .authorizedAlways {
-            print(".authorizedAlways")
+            geolocationAllowed = true
+            
+            let context = coreDataManager.context
+            
+            let request: NSFetchRequest<CityWeather> = CityWeather.fetchRequest()
+            let predicate = NSPredicate(format: "geolocated = %d", true)
+            request.predicate = predicate
+            let geolocatedCities = coreDataManager.fetchDataWithRequest(for: CityWeather.self, with: coreDataManager.context, request: request)
+            
+            var geolocatedCityVC: CityWeatherViewController?
+            
+            if geolocatedCities.isEmpty {
+                // если нет, тогда вошли в режим геолокации в 1-ый раз и нужно создать для этого "город"
+                let geolocatedCity = coreDataManager.createObject(from: CityWeather.self, with: context)
+                
+                geolocatedCity.geolocated = true
+                geolocatedCity.cityName = "Текущее местоположение"
+                geolocatedCity.countryName = ""
+                geolocatedCity.lat = ""
+                geolocatedCity.lon = ""
+                
+                coreDataManager.save(context: context)
+                
+                cities.insert(geolocatedCity, at: 0)
+                geolocatedCityVC = CityWeatherViewController(city: geolocatedCity)
+
+            } else {
+                if let geolocatedCity = geolocatedCities.first {
+                    cities.insert(geolocatedCity, at: 0)
+                    geolocatedCityVC = CityWeatherViewController(city: geolocatedCity)
+                }
+            }
+            
+            if let geolocatedCityVC = geolocatedCityVC {
+                pages.insert(UINavigationController(rootViewController: geolocatedCityVC), at: 1)
+                pageControl.numberOfPages = pages.count
+                pageControl.currentPage = initialPage + 1
+                setViewControllers([pages[initialPage + 1]], direction: .forward, animated: true, completion: nil)
+            }
+            
+        } else if status == .denied {
+            if geolocationAllowed == true {
+                geolocationAllowed = false
+                cities.remove(at: 0)
+                pages.remove(at: 1)
+                pageControl.numberOfPages = pages.count
+                pageControl.currentPage = initialPage
+                setViewControllers([pages[initialPage]], direction: .forward, animated: true, completion: nil)
+            }
         }
     }
     
 }
 
-extension MainScreenViewController: CLLocationManagerDelegate {
-    
-}
+//extension MainScreenViewController: CLLocationManagerDelegate {
+//
+//    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+//        print("Got location data")
+//        if let location = locations.last {
+//            let lat = location.coordinate.latitude
+//            let lon = location.coordinate.longitude
+//            weatherManager.fetchWeather(lat: lat, lon: lon)
+//        }
+//    }
+//
+//    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+//        print("Не могу получить координаты текущего положения")
+//    }
+//
+//}
+
+//extension MainScreenViewController: WeatherManagerDelegate {
+//
+//    func didUpdateWeather(_ weatherManager: NetworkManager, weather: Weather) {
+//
+//        let context = coreDataManager.context
+//
+//        let request: NSFetchRequest<CityWeather> = CityWeather.fetchRequest()
+//        let predicate = NSPredicate(format: "geolocated = %d", true)
+//        request.predicate = predicate
+//        let geolocatedCities = coreDataManager.fetchDataWithRequest(for: CityWeather.self, with: coreDataManager.context, request: request)
+//
+//        if geolocatedCities.isEmpty {
+//            // если нет, тогда вошли в режим геолокации в 1-ый раз и нужно создать для этого "город"
+//            let geolocatedCity = coreDataManager.createObject(from: CityWeather.self, with: context)
+//
+//            geolocatedCity.geolocated = true
+//
+//            geolocatedCity.cityName = "Текущее местоположение"
+//            geolocatedCity.lat = String(weather.lat)
+//            geolocatedCity.lon = String(weather.lon)
+//
+//        } else {
+//            if let geolocatedCity = geolocatedCities.first {
+//                geolocatedCity.lat = String(weather.lat)
+//                geolocatedCity.lon = String(weather.lon)
+//            }
+//
+//        }
+//
+//        coreDataManager.save(context: context)
+//
+//    }
+//
+//    func didFailWithError(error: Error) {
+//        print("ошибка получения данных о погоде из сети")
+//    }
+//
+//    func didBeginNetworkActivity() {
+//
+//    }
+//
+//}
 
 

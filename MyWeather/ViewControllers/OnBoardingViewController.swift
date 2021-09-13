@@ -11,7 +11,7 @@ import SnapKit
 import CoreLocation
 
 protocol LocationStatusChangesDelegate {
-    func locationStatusDidChange(status: CLAuthorizationStatus)
+    func locationAuthStatusDidChange(status: CLAuthorizationStatus)
 }
 
 class OnBoardingViewController: UIViewController {
@@ -104,6 +104,8 @@ class OnBoardingViewController: UIViewController {
         
         navigationController?.isNavigationBarHidden = true
         
+        locationManager = CLLocationManager()
+        
         setupLayout()
         
         // проверяем запускалось ли уже приложение
@@ -113,7 +115,18 @@ class OnBoardingViewController: UIViewController {
             }
         }
         
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         
+//        if locationManager?.authorizationStatus == .authorizedAlways {
+//            useLocationButton.isEnabled = false
+//        } else {
+//            if useLocationButton.isEnabled == false {
+//                useLocationButton.isEnabled = true
+//            }
+//        }
     }
     
     // MARK: - Layout
@@ -181,20 +194,34 @@ class OnBoardingViewController: UIViewController {
     @objc private func useLocationButtonPressed() {
         print("use location pressed!")
         
-        locationManager = CLLocationManager()
+//        locationManager = CLLocationManager()
         locationManager?.delegate = self
         
         if locationManager?.authorizationStatus == .authorizedAlways {
             print("authorizedWhenInUse pressed")
         } else {
-            locationManager?.requestAlwaysAuthorization()
+            // проверяем запрашивалась ли уже авторизация
+            if let alwaysAuthHasBeenRequested = defaults.object(forKey: "alwaysAuthHasBeenRequested") as? Bool {
+                if alwaysAuthHasBeenRequested {
+                    guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else { return }
+                    if UIApplication.shared.canOpenURL(settingsUrl) {
+                        UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
+                            print("Settings opened: \(success)")
+                        })
+                    }
+                } else {
+                    locationManager?.requestAlwaysAuthorization()
+                }
+            } else {
+                locationManager?.requestAlwaysAuthorization()
+            }
         }
         
-//        coordinator?.navigationController.popToRootViewController(animated: true)
     }
     
     @objc private func addLocationsManuallyButtonPressed() {
         print("add location pressed!")
+        
         coordinator?.navigationController.popToRootViewController(animated: true)
     }
 
@@ -211,33 +238,46 @@ extension OnBoardingViewController: UIScrollViewDelegate {
 extension OnBoardingViewController: CLLocationManagerDelegate {
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        
+
         if CLLocationManager.locationServicesEnabled() == true {
-            
+
             if manager.authorizationStatus == .denied {
                 // user denied authorization
                 print("user denied authorization")
-                delegate?.locationStatusDidChange(status: .denied)
+                delegate?.locationAuthStatusDidChange(status: .denied)
+                
             } else if manager.authorizationStatus == .authorizedAlways {
                 // user accepted authorization
                 print("user accepted authorization")
-                delegate?.locationStatusDidChange(status: .authorizedAlways)
+                
+                // проверяем запрашивалась ли авторизация ранее
+                if let alwaysAuthHasBeenRequested = defaults.object(forKey: "alwaysAuthHasBeenRequested") as? Bool {
+                    if !alwaysAuthHasBeenRequested {
+                        defaults.setValue(true, forKey: "alwaysAuthHasBeenRequested")
+                    }
+                } else {
+                    defaults.setValue(true, forKey: "alwaysAuthHasBeenRequested")
+                }
+                
+                delegate?.locationAuthStatusDidChange(status: .authorizedAlways)
                 coordinator?.navigationController.popToRootViewController(animated: true)
+                
             } else if manager.authorizationStatus == .notDetermined {
                 // user didn't determined authorization
                 print("user didn't determined authorization")
-                delegate?.locationStatusDidChange(status: .notDetermined)
+                delegate?.locationAuthStatusDidChange(status: .notDetermined)
+                
             } else if manager.authorizationStatus == .authorizedWhenInUse {
                 // in use
                 print("in use")
-                delegate?.locationStatusDidChange(status: .authorizedWhenInUse)
+                delegate?.locationAuthStatusDidChange(status: .authorizedWhenInUse)
             }
-            
+
         } else {
             //Access to user location permission denied!
             print("Access to user location permission denied!")
         }
-        
+
     }
     
 }

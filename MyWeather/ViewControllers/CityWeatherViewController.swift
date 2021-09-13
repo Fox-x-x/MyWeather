@@ -9,6 +9,7 @@ import UIKit
 import SnapKit
 import Hex
 import CoreData
+import CoreLocation
 
 class CityWeatherViewController: UIViewController {
     
@@ -30,6 +31,8 @@ class CityWeatherViewController: UIViewController {
     
     private let coreDataManager = CoreDataStack()
     private lazy var context = coreDataManager.context
+    
+    private var locationManager: CLLocationManager?
     
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -119,6 +122,10 @@ class CityWeatherViewController: UIViewController {
         
         weatherManager.weatherDataDelegate = self
         
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+        locationManager?.desiredAccuracy = kCLLocationAccuracyKilometer
+        
         setupLayout()
         
     }
@@ -157,12 +164,21 @@ class CityWeatherViewController: UIViewController {
             
             let backgroundQueue = DispatchQueue.global(qos: .background)
             backgroundQueue.async {
-                self.weatherManager.fetchWeather(for: self.city)
+                if self.city.geolocated == true {
+                    self.locationManager?.startUpdatingLocation()
+                } else {
+                    self.weatherManager.fetchWeather(for: self.city)
+                }
             }
         } else {
             // в противном случае делаем запрос в сеть и далее идем в метод делегата и там обновляем UI
             print("Иду в сеть...")
-            weatherManager.fetchWeather(for: city)
+            if city.geolocated == true {
+                locationManager?.startUpdatingLocation()
+            } else {
+                weatherManager.fetchWeather(for: city)
+            }
+            
         }
         
     }
@@ -347,7 +363,29 @@ extension CityWeatherViewController: WeatherManagerDelegate {
     func didFailWithError(error: Error) {
         DispatchQueue.main.async {
             self.daySummaryView.spinner.stopAnimating()
-            print("что-то пошло не так")
+            print("что-то пошло не так, didFailWithError")
+            handleApiError(error: .networkError, vc: self)
         }
     }
+}
+
+extension CityWeatherViewController: CLLocationManagerDelegate {
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        
+        if let firstLocation = locations.first {
+            weatherManager.fetchWeather(lat: firstLocation.coordinate.latitude, lon: firstLocation.coordinate.longitude)
+            locationManager?.stopUpdatingLocation()
+        } else {
+            print("Невозможн получить координаты")
+            locationManager?.stopUpdatingLocation()
+            handleApiError(error: .locationNotFound, vc: self)
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("locationManager didFailWithError")
+        handleApiError(error: .locationNotFound, vc: self)
+    }
+    
 }

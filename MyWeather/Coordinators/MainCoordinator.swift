@@ -19,7 +19,6 @@ final class MainCoordinator: Coordinator {
     
     func start() {
         let vc = MainScreenViewController()
-//        let vc = OnBoardingViewController()
         vc.coordinator = self
         navigationController.pushViewController(vc, animated: true)
     }
@@ -31,7 +30,6 @@ final class MainCoordinator: Coordinator {
     }
     
     func gotoOnBoarding(vc: OnBoardingViewController) {
-//        let vc = OnBoardingViewController()
         vc.coordinator = self
         navigationController.pushViewController(vc, animated: true)
     }
@@ -50,6 +48,10 @@ final class MainCoordinator: Coordinator {
     
     func goBack() {
         navigationController.popViewController(animated: true)
+    }
+    
+    func poptoRootVC() {
+        navigationController.popToRootViewController(animated: true)
     }
     
     

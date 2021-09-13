@@ -79,7 +79,6 @@ class AddCityViewController: UIViewController {
     }
     
     @objc private func addCityButtonPressed() {
-//        print("pressed")
         
         let alert = UIAlertController(title: "Добавить город", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Добавить", style: .default) { [weak self] action in
@@ -88,23 +87,9 @@ class AddCityViewController: UIViewController {
             
             if let cityName = alert.textFields?.first?.text {
                 vc.cityManager.fetchCityLocation(cityName: cityName)
-                // делаем запрос в сеть на поиск города. Если находим, создаем объект City, добавляем в БД вместе с его Weather (будет пустой)
-                // отправляем нотификацию в MainScreenViewController, там в didAddCity берем этот объект и
-                // кладем в CityWeatherViewController. Тот если найдет в БД weatherData для этого City, подгрузит сначала ее, если нет, то сразу из сети
                 
                 print(cityName)
             }
-            
-//            if let dir = vc.currentDir, let name = alert.textFields?.first?.text {
-//                var newDir = dir
-//                newDir.appendPathComponent(name)
-//                do {
-//                    try vc.fileManager.createDirectory(at: newDir, withIntermediateDirectories: false, attributes: nil)
-//                    vc.showFilesFor(dir: dir, using: vc.fileManager)
-//                } catch {
-//                    print("\(error.localizedDescription)")
-//                }
-//            }
         }
         
         let cancel = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)
@@ -151,7 +136,9 @@ extension AddCityViewController: FindCityLocationManagerDelegate {
     }
     
     func didFailWithError(error: Error) {
-        handleApiError(error: .networkError, vc: self)
+        DispatchQueue.main.async {
+            handleApiError(error: .networkError, vc: self)
+        }
     }
     
 }

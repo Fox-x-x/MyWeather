@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import Hex
+import CoreLocation
 
 class DailyWeatherViewController: UIViewController {
     
@@ -26,6 +27,8 @@ class DailyWeatherViewController: UIViewController {
     
     private let coreDataManager = CoreDataStack()
     private lazy var context = coreDataManager.context
+    
+    private var locationManager: CLLocationManager?
     
     private var isInCacheMode = false
     
@@ -118,6 +121,10 @@ class DailyWeatherViewController: UIViewController {
         cityNameLabel.text = city.cityName
         navigationView.addGestureRecognizer(navigationViewTap)
         
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+        locationManager?.desiredAccuracy = kCLLocationAccuracyKilometer
+        
         options = loadSettings()
         setupLayout()
         updateUI()
@@ -151,11 +158,19 @@ class DailyWeatherViewController: UIViewController {
             
             let backgroundQueue = DispatchQueue.global(qos: .background)
             backgroundQueue.async {
-                self.weatherManager.fetchWeather(for: self.city)
+                if self.city.geolocated == true {
+                    self.locationManager?.startUpdatingLocation()
+                } else {
+                    self.weatherManager.fetchWeather(for: self.city)
+                }
             }
             
         } else {
-            weatherManager.fetchWeather(for: city)
+            if self.city.geolocated == true {
+                self.locationManager?.startUpdatingLocation()
+            } else {
+                self.weatherManager.fetchWeather(for: self.city)
+            }
         }
         
     }
@@ -336,7 +351,8 @@ extension DailyWeatherViewController: WeatherManagerDelegate {
     func didFailWithError(error: Error) {
         DispatchQueue.main.async {
             self.spinner.stopAnimating()
-            print("что-то пошло не так")
+            print("didFailWithError, DailyWeatherViewController")
+            handleApiError(error: .networkError, vc: self)
         }
     }
     
@@ -344,6 +360,27 @@ extension DailyWeatherViewController: WeatherManagerDelegate {
         DispatchQueue.main.async {
             self.spinner.startAnimating()
         }
+    }
+    
+}
+
+extension DailyWeatherViewController: CLLocationManagerDelegate {
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        
+        if let firstLocation = locations.first {
+            weatherManager.fetchWeather(lat: firstLocation.coordinate.latitude, lon: firstLocation.coordinate.longitude)
+            locationManager?.stopUpdatingLocation()
+        } else {
+            print("Невозможн получить координаты")
+            locationManager?.stopUpdatingLocation()
+            handleApiError(error: .locationNotFound, vc: self)
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("locationManager didFailWithError")
+        handleApiError(error: .locationNotFound, vc: self)
     }
     
 }

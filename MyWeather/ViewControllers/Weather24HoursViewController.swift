@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import Charts
+import CoreLocation
 
 class Weather24HoursViewController: UIViewController {
     
@@ -26,6 +27,8 @@ class Weather24HoursViewController: UIViewController {
     
     private let coreDataManager = CoreDataStack()
     private lazy var context = coreDataManager.context
+    
+    private var locationManager: CLLocationManager?
     
     private var isInCacheMode = false
     
@@ -109,15 +112,25 @@ class Weather24HoursViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+//        NotificationCenter.default.addObserver(self, selector: #selector(appMovedFromBackground), name: UIApplication.didBecomeActiveNotification, object: nil)
+        
         navigationView.title = "Прогноз на 24 часа"
         weatherManager.weatherDataDelegate = self
         cityNameLabel.text = city.cityName
         navigationView.addGestureRecognizer(navigationViewTap)
         
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+        locationManager?.desiredAccuracy = kCLLocationAccuracyKilometer
+        
         options = loadSettings()
         setupLayout()
         updateUI()
     }
+    
+//    @objc private func appMovedFromBackground() {
+//        coordinator?.goBack()
+//    }
     
     private func setChartData() {
         
@@ -179,11 +192,19 @@ class Weather24HoursViewController: UIViewController {
             
             let backgroundQueue = DispatchQueue.global(qos: .background)
             backgroundQueue.async {
-                self.weatherManager.fetchWeather(for: self.city)
+                if self.city.geolocated == true {
+                    self.locationManager?.startUpdatingLocation()
+                } else {
+                    self.weatherManager.fetchWeather(for: self.city)
+                }
             }
             
         } else {
-            weatherManager.fetchWeather(for: city)
+            if self.city.geolocated == true {
+                self.locationManager?.startUpdatingLocation()
+            } else {
+                self.weatherManager.fetchWeather(for: self.city)
+            }
         }
         
     }
@@ -333,6 +354,7 @@ extension Weather24HoursViewController: WeatherManagerDelegate {
         DispatchQueue.main.async {
 //            self.spinner.stopAnimating()
             print("что-то пошло не так")
+            handleApiError(error: .networkError, vc: self)
         }
     }
     
@@ -340,6 +362,27 @@ extension Weather24HoursViewController: WeatherManagerDelegate {
         DispatchQueue.main.async {
 //            self.spinner.startAnimating()
         }
+    }
+    
+}
+
+extension Weather24HoursViewController: CLLocationManagerDelegate {
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        
+        if let firstLocation = locations.first {
+            weatherManager.fetchWeather(lat: firstLocation.coordinate.latitude, lon: firstLocation.coordinate.longitude)
+            locationManager?.stopUpdatingLocation()
+        } else {
+            print("Невозможн получить координаты")
+            locationManager?.stopUpdatingLocation()
+            handleApiError(error: .locationNotFound, vc: self)
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("locationManager didFailWithError")
+        handleApiError(error: .locationNotFound, vc: self)
     }
     
 }

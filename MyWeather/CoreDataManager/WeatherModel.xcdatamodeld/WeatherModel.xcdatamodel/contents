@@ -3,6 +3,7 @@
     <entity name="CityWeather" representedClassName="CityWeather" syncable="YES">
         <attribute name="cityName" attributeType="String"/>
         <attribute name="countryName" attributeType="String"/>
+        <attribute name="geolocated" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="lat" attributeType="String"/>
         <attribute name="lon" attributeType="String"/>
         <relationship name="weather" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WeatherData" inverseName="city" inverseEntity="WeatherData"/>
@@ -96,7 +97,7 @@
         <relationship name="hourData" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="HourData" inverseName="weather" inverseEntity="HourData"/>
     </entity>
     <elements>
-        <element name="CityWeather" positionX="54.11334228515631" positionY="7329.626312255859" width="140.923583984375" height="118"/>
+        <element name="CityWeather" positionX="54.11334228515631" positionY="7329.626312255859" width="140.923583984375" height="119"/>
         <element name="CurrentData" positionX="452.5087890625" positionY="7139.080291748047" width="128" height="268"/>
         <element name="DayData" positionX="425.9171752929688" positionY="7709.931976318359" width="128" height="343"/>
         <element name="FeelsLikeData" positionX="202.7343139648438" positionY="7911.917266845703" width="128" height="118"/>
