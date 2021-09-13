@@ -25,8 +25,6 @@ final class Forecast24HRSCell: UICollectionViewCell {
             
             temperatureLabel.text = String(format: "%.0f", floor(convertTemperature(hourCached.temp, to: options.temperature))) + "°"
             
-//            print("hourCached...")
-            
             if let weatherID = hourCached.weather.first?.id {
                 let imageName = getImageByWeatherID(id: weatherID)
                 cloudyImage.image = UIImage(named: imageName)
@@ -46,8 +44,6 @@ final class Forecast24HRSCell: UICollectionViewCell {
             timeLabel.text = dateToString(Double(hour.dt), withFormat: timeFormat)
             
             temperatureLabel.text = String(format: "%.0f", floor(convertTemperature(hour.temp, to: options.temperature))) + "°"
-            
-//            print("hour...")
             
             if let weatherID = hour.weather.first?.id {
                 let imageName = getImageByWeatherID(id: weatherID)

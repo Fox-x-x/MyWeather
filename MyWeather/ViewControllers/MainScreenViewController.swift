@@ -91,20 +91,10 @@ class MainScreenViewController: UIPageViewController {
         dataSource = self
         delegate = self
         onBoardingViewController.delegate = self
-//        weatherManager.weatherDataDelegate = self
         
         locationManager = CLLocationManager()
-//        locationManager?.delegate = self
         
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedFromBackground), name: UIApplication.didBecomeActiveNotification, object: nil)
-        
-//        if locationManager?.authorizationStatus == .authorizedAlways {
-//            print("In authorizedWhenInUse mode now")
-//            geolocationAllowed = true
-//            locationButton.isEnabled = false
-//        } else {
-//            print("auth is not allowed")
-//        }
         
         checkAuthStatus()
         setupPages()
@@ -119,10 +109,6 @@ class MainScreenViewController: UIPageViewController {
     // MARK: - viewWillAppear
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        print("MainScreenWillAppear")
-        
-//        checkAuthStatus()
         
         // проверяем запускалось ли уже приложение и нужно ли показывать онбординг
         if let appHasBeenLaunched = defaults.object(forKey: "hasBeenLaunched") as? Bool {
@@ -267,13 +253,10 @@ class MainScreenViewController: UIPageViewController {
     }
     
     @objc private func settingsButtonPressed() {
-        print("burger pressed!")
         coordinator?.gotoSettings()
     }
     
     @objc private func locationButtonPressed() {
-        print("locations pressed!")
-//        coordinator?.gotoOnBoarding()
         coordinator?.gotoOnBoarding(vc: onBoardingViewController)
     }
     
@@ -428,65 +411,3 @@ extension MainScreenViewController: LocationStatusChangesDelegate {
     }
     
 }
-
-//extension MainScreenViewController: CLLocationManagerDelegate {
-//
-//    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-//        print("Got location data")
-//        if let location = locations.last {
-//            let lat = location.coordinate.latitude
-//            let lon = location.coordinate.longitude
-//            weatherManager.fetchWeather(lat: lat, lon: lon)
-//        }
-//    }
-//
-//    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-//        print("Не могу получить координаты текущего положения")
-//    }
-//
-//}
-
-//extension MainScreenViewController: WeatherManagerDelegate {
-//
-//    func didUpdateWeather(_ weatherManager: NetworkManager, weather: Weather) {
-//
-//        let context = coreDataManager.context
-//
-//        let request: NSFetchRequest<CityWeather> = CityWeather.fetchRequest()
-//        let predicate = NSPredicate(format: "geolocated = %d", true)
-//        request.predicate = predicate
-//        let geolocatedCities = coreDataManager.fetchDataWithRequest(for: CityWeather.self, with: coreDataManager.context, request: request)
-//
-//        if geolocatedCities.isEmpty {
-//            // если нет, тогда вошли в режим геолокации в 1-ый раз и нужно создать для этого "город"
-//            let geolocatedCity = coreDataManager.createObject(from: CityWeather.self, with: context)
-//
-//            geolocatedCity.geolocated = true
-//
-//            geolocatedCity.cityName = "Текущее местоположение"
-//            geolocatedCity.lat = String(weather.lat)
-//            geolocatedCity.lon = String(weather.lon)
-//
-//        } else {
-//            if let geolocatedCity = geolocatedCities.first {
-//                geolocatedCity.lat = String(weather.lat)
-//                geolocatedCity.lon = String(weather.lon)
-//            }
-//
-//        }
-//
-//        coreDataManager.save(context: context)
-//
-//    }
-//
-//    func didFailWithError(error: Error) {
-//        print("ошибка получения данных о погоде из сети")
-//    }
-//
-//    func didBeginNetworkActivity() {
-//
-//    }
-//
-//}
-
-

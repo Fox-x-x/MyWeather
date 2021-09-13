@@ -59,9 +59,6 @@ final class WeatherDecoder {
             
         }
         
-        // Подумать про то, что некоторых параметров может не прилетать в ответе сервера
-        // Поделать запросы на пупырловки и посмотреть что от них прилетает. Может сделать все поля optional?
-        
         // hour
         let requestForHour: NSFetchRequest<HourData> = HourData.fetchRequest()
         let predicateForHour = NSPredicate(format: "weatherData == %@", weatherFromDB)
@@ -71,7 +68,6 @@ final class WeatherDecoder {
         let hourElements = coreDataManager.fetchDataWithRequest(for: HourData.self, with: coreDataManager.context, request: requestForHour)
         
         // hour weatherElements
-        // создаем массив hourCached, в цикле создаем элемент hourCached и запихиваем в него полученные при запросе в цикле WeatherElementCached
         for hour in hourElements {
             
             let requestForHourWeatherElements: NSFetchRequest<WeatherElementData> = WeatherElementData.fetchRequest()

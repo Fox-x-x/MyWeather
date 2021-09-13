@@ -18,10 +18,7 @@ class AddCityViewController: UIViewController {
     var delegate: AddCityManagerDelegate?
     var cityManager = NetworkManager()
     
-//    private let notificationCenter = NotificationCenter.default
     private var coreDataManager: CoreDataStack
-//    private var context: NSManagedObjectContext?
-//    private lazy var backgroundContext = coreDataManager.backgroundContext
     
     private lazy var contentView: UIView = {
         let view = UIView()
@@ -131,7 +128,9 @@ extension AddCityViewController: FindCityLocationManagerDelegate {
         } else {
             // ошибка: город не найден
             print("Ошибка: город не найден")
-            handleApiError(error: .cityNotFound, vc: self)
+            DispatchQueue.main.async {
+                handleApiError(error: .cityNotFound, vc: self)
+            }
         }
     }
     

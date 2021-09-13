@@ -15,14 +15,7 @@ class BriefWeatherInfoTableViewCell: UITableViewCell {
         didSet {
             guard let dayCached = dayCached else { return }
             
-//            print("dayCached...")
-            
             dateLabel.text = dateToString(dayCached.dt, withFormat: "dd") + "/" + dateToString(dayCached.dt, withFormat: "MM")
-            
-//            if let weatherID = dayCached.weather.first?.id {
-//                let imageName = getImageByWeatherID(id: weatherID)
-//                rainyCloudImage.image = UIImage(named: imageName)
-//            }
             
             downfallPossibilityLabel.text = String(format: "%.0f", floor(dayCached.pop * 100)) + "%"
             downfallDescriptionLabel.text = dayCached.weather.first?.weatherDescription
@@ -39,14 +32,7 @@ class BriefWeatherInfoTableViewCell: UITableViewCell {
         didSet {
             guard let day = day else { return }
             
-//            print("day...")
-            
             dateLabel.text = dateToString(day.dt, withFormat: "dd") + "/" + dateToString(day.dt, withFormat: "MM")
-            
-//            if let weatherID = day.weather.first?.id {
-//                let imageName = getImageByWeatherID(id: weatherID)
-//                rainyCloudImage.image = UIImage(named: imageName)
-//            }
             
             downfallPossibilityLabel.text = String(format: "%.0f", floor(day.pop * 100)) + "%"
             downfallDescriptionLabel.text = day.weather.first?.weatherDescription

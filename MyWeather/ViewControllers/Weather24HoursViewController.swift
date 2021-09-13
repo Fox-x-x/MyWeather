@@ -38,7 +38,6 @@ class Weather24HoursViewController: UIViewController {
         let scrollView = UIScrollView()
         scrollView.showsVerticalScrollIndicator = false
         scrollView.delegate = self
-//        scrollView.backgroundColor = .systemOrange
         return scrollView
     }()
     
@@ -112,8 +111,6 @@ class Weather24HoursViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-//        NotificationCenter.default.addObserver(self, selector: #selector(appMovedFromBackground), name: UIApplication.didBecomeActiveNotification, object: nil)
-        
         navigationView.title = "Прогноз на 24 часа"
         weatherManager.weatherDataDelegate = self
         cityNameLabel.text = city.cityName
@@ -127,10 +124,6 @@ class Weather24HoursViewController: UIViewController {
         setupLayout()
         updateUI()
     }
-    
-//    @objc private func appMovedFromBackground() {
-//        coordinator?.goBack()
-//    }
     
     private func setChartData() {
         
@@ -180,8 +173,7 @@ class Weather24HoursViewController: UIViewController {
                 self.isInCacheMode = true
                 
                 self.hoursCached = self.getHoursFromWeather(from: weather)
-//                self.chartView.isInCacheMode = self.isInCacheMode
-//                self.chartView.points = self.calculatePoints(view: self.chartView, cachedHours: self.hoursCached, hours: self.hours, isInCacheMode: self.isInCacheMode)
+
                 self.hoursCollectionView.reloadData()
                 
                 self.temperatureValues = self.getPointsForChart(cachedHours: self.hoursCached, hours: self.hours, options: self.options, isInCacheMode: self.isInCacheMode)
@@ -338,9 +330,6 @@ extension Weather24HoursViewController: WeatherManagerDelegate {
             self.isInCacheMode = false
             self.hoursCollectionView.reloadData()
             
-//            self.chartView.isInCacheMode = self.isInCacheMode
-//            self.chartView.points = self.calculatePoints(view: self.chartView, cachedHours: self.hoursCached, hours: self.hours, isInCacheMode: self.isInCacheMode)
-            
             // записали в БД (для обновления из кэша в будущем)
             self.city = self.coreDataManager.updateWeather(for: self.city, with: weather)
             
@@ -352,16 +341,12 @@ extension Weather24HoursViewController: WeatherManagerDelegate {
     
     func didFailWithError(error: Error) {
         DispatchQueue.main.async {
-//            self.spinner.stopAnimating()
             print("что-то пошло не так")
             handleApiError(error: .networkError, vc: self)
         }
     }
     
     func didBeginNetworkActivity() {
-        DispatchQueue.main.async {
-//            self.spinner.startAnimating()
-        }
     }
     
 }

@@ -117,18 +117,6 @@ class OnBoardingViewController: UIViewController {
         
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-//        if locationManager?.authorizationStatus == .authorizedAlways {
-//            useLocationButton.isEnabled = false
-//        } else {
-//            if useLocationButton.isEnabled == false {
-//                useLocationButton.isEnabled = true
-//            }
-//        }
-    }
-    
     // MARK: - Layout
     
     private func setupLayout() {
@@ -194,7 +182,6 @@ class OnBoardingViewController: UIViewController {
     @objc private func useLocationButtonPressed() {
         print("use location pressed!")
         
-//        locationManager = CLLocationManager()
         locationManager?.delegate = self
         
         if locationManager?.authorizationStatus == .authorizedAlways {
