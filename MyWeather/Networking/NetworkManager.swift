@@ -20,33 +20,68 @@ protocol FindCityLocationManagerDelegate {
 }
 
 final class NetworkManager {
-    
-    let baseURL = "https://api.openweathermap.org/data/2.5/onecall?"
-    let params = "&lang=ru&units=metric&appid="
+
     let apiKey = "4aa31e68b72635e6c5bd2e40781e5469"
+    let unitsOfMeasurement = "metric"
+    let lang = "ru"
     
     var weatherDataDelegate: WeatherManagerDelegate?
     var cityLocationDelegate: FindCityLocationManagerDelegate?
     
     let session = URLSession.shared
     
+    private lazy var urlComponents: URLComponents = {
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "api.openweathermap.org"
+        components.path = "/data/2.5/onecall"
+        
+        return components
+    }()
+    
     func fetchWeather(for city: CityWeather) {
         
-        let url = baseURL + "lat=\(city.lat)" + "&" + "lon=\(city.lon)" + params + apiKey
+        urlComponents.queryItems = []
+        urlComponents.queryItems = [
+            URLQueryItem(name: "lang", value: lang),
+            URLQueryItem(name: "units", value: unitsOfMeasurement),
+            URLQueryItem(name: "appid", value: apiKey),
+            URLQueryItem(name: "lat", value: city.lat),
+            URLQueryItem(name: "lon", value: city.lon)
+        ]
+        
+        let url = urlComponents.url?.absoluteString
         
         weatherDataDelegate?.didBeginNetworkActivity()
         
-        performWeatherUpdateRequest(url: url)
+        if let url = url {
+            performWeatherUpdateRequest(url: url)
+        } else {
+            weatherDataDelegate?.didFailWithError(error: ApiError.networkError)
+        }
 
     }
     
     func fetchWeather(lat: CLLocationDegrees, lon: CLLocationDegrees) {
         
-        let url = baseURL + "lat=\(lat)" + "&" + "lon=\(lon)" + params + apiKey
+        urlComponents.queryItems = []
+        urlComponents.queryItems = [
+            URLQueryItem(name: "lang", value: lang),
+            URLQueryItem(name: "units", value: unitsOfMeasurement),
+            URLQueryItem(name: "appid", value: apiKey),
+            URLQueryItem(name: "lat", value: String(lat)),
+            URLQueryItem(name: "lon", value: String(lon))
+        ]
+
+        let url = urlComponents.url?.absoluteString
         
         weatherDataDelegate?.didBeginNetworkActivity()
         
-        performWeatherUpdateRequest(url: url)
+        if let url = url {
+            performWeatherUpdateRequest(url: url)
+        } else {
+            weatherDataDelegate?.didFailWithError(error: ApiError.networkError)
+        }
         
     }
     

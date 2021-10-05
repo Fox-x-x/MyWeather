@@ -6,8 +6,8 @@
 //
 
 import UIKit
-import Hex
 import SnapKit
+import Hex
 import CoreLocation
 
 protocol LocationStatusChangesDelegate {
@@ -109,10 +109,8 @@ class OnBoardingViewController: UIViewController {
         setupLayout()
         
         // проверяем запускалось ли уже приложение
-        if let appHasBeenLaunched = defaults.object(forKey: "hasBeenLaunched") as? Bool {
-            if !appHasBeenLaunched {
-                defaults.setValue(true, forKey: "hasBeenLaunched")
-            }
+        if let appHasBeenLaunched = defaults.object(forKey: "hasBeenLaunched") as? Bool, !appHasBeenLaunched {
+            defaults.setValue(true, forKey: "hasBeenLaunched")
         }
         
     }
@@ -188,16 +186,12 @@ class OnBoardingViewController: UIViewController {
             print("authorizedWhenInUse pressed")
         } else {
             // проверяем запрашивалась ли уже авторизация
-            if let alwaysAuthHasBeenRequested = defaults.object(forKey: "alwaysAuthHasBeenRequested") as? Bool {
-                if alwaysAuthHasBeenRequested {
-                    guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else { return }
-                    if UIApplication.shared.canOpenURL(settingsUrl) {
-                        UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
-                            print("Settings opened: \(success)")
-                        })
-                    }
-                } else {
-                    locationManager?.requestAlwaysAuthorization()
+            if let alwaysAuthHasBeenRequested = defaults.object(forKey: "alwaysAuthHasBeenRequested") as? Bool, alwaysAuthHasBeenRequested {
+                guard let settingsUrl = URL(string: UIApplication.openSettingsURLString) else { return }
+                if UIApplication.shared.canOpenURL(settingsUrl) {
+                    UIApplication.shared.open(settingsUrl, completionHandler: { (success) in
+                        print("Settings opened: \(success)")
+                    })
                 }
             } else {
                 locationManager?.requestAlwaysAuthorization()
@@ -233,7 +227,7 @@ extension OnBoardingViewController: CLLocationManagerDelegate {
                 print("user denied authorization")
                 delegate?.locationAuthStatusDidChange(status: .denied)
                 
-            } else if manager.authorizationStatus == .authorizedAlways {
+            } else if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedWhenInUse {
                 // user accepted authorization
                 print("user accepted authorization")
                 
@@ -246,18 +240,18 @@ extension OnBoardingViewController: CLLocationManagerDelegate {
                     defaults.setValue(true, forKey: "alwaysAuthHasBeenRequested")
                 }
                 
-                delegate?.locationAuthStatusDidChange(status: .authorizedAlways)
+                if manager.authorizationStatus == .authorizedAlways {
+                    delegate?.locationAuthStatusDidChange(status: .authorizedAlways)
+                } else {
+                    delegate?.locationAuthStatusDidChange(status: .authorizedWhenInUse)
+                }
+                
                 coordinator?.navigationController.popToRootViewController(animated: true)
                 
             } else if manager.authorizationStatus == .notDetermined {
                 // user didn't determined authorization
                 print("user didn't determined authorization")
-                delegate?.locationAuthStatusDidChange(status: .notDetermined)
-                
-            } else if manager.authorizationStatus == .authorizedWhenInUse {
-                // in use
-                print("in use")
-                delegate?.locationAuthStatusDidChange(status: .authorizedWhenInUse)
+                delegate?.locationAuthStatusDidChange(status: .notDetermined)   
             }
 
         } else {

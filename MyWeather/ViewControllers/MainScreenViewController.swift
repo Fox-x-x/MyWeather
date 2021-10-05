@@ -124,7 +124,7 @@ class MainScreenViewController: UIPageViewController {
     }
     
     @objc private func appMovedFromBackground() {
-        if locationManager?.authorizationStatus == .authorizedAlways {
+        if locationManager?.authorizationStatus == .authorizedAlways || locationManager?.authorizationStatus == .authorizedWhenInUse {
             print("In authorizedWhenInUse mode now")
             geolocationAllowed = true
             locationButton.isEnabled = false
@@ -265,7 +265,7 @@ class MainScreenViewController: UIPageViewController {
     }
     
     private func checkAuthStatus() {
-        if locationManager?.authorizationStatus == .authorizedAlways {
+        if locationManager?.authorizationStatus == .authorizedAlways || locationManager?.authorizationStatus == .authorizedWhenInUse {
             print("In authorizedWhenInUse mode now")
             geolocationAllowed = true
             locationButton.isEnabled = false
@@ -348,7 +348,6 @@ extension MainScreenViewController: AddCityManagerDelegate {
             setViewControllers([pages[initialPage + 1]], direction: .forward, animated: true, completion: nil)
         }
         
-        
     }
     
 }
@@ -357,7 +356,7 @@ extension MainScreenViewController: LocationStatusChangesDelegate {
     
     func locationAuthStatusDidChange(status: CLAuthorizationStatus) {
         
-        if status == .authorizedAlways {
+        if status == .authorizedAlways || status == .authorizedWhenInUse {
             geolocationAllowed = true
             
             let context = coreDataManager.context
@@ -398,15 +397,13 @@ extension MainScreenViewController: LocationStatusChangesDelegate {
                 setViewControllers([pages[initialPage + 1]], direction: .forward, animated: true, completion: nil)
             }
             
-        } else if status == .denied {
-            if geolocationAllowed == true {
-                geolocationAllowed = false
-                cities.remove(at: 0)
-                pages.remove(at: 1)
-                pageControl.numberOfPages = pages.count
-                pageControl.currentPage = initialPage
-                setViewControllers([pages[initialPage]], direction: .forward, animated: true, completion: nil)
-            }
+        } else if status == .denied, geolocationAllowed {
+            geolocationAllowed = false
+            cities.remove(at: 0)
+            pages.remove(at: 1)
+            pageControl.numberOfPages = pages.count
+            pageControl.currentPage = initialPage
+            setViewControllers([pages[initialPage]], direction: .forward, animated: true, completion: nil)
         }
     }
     
